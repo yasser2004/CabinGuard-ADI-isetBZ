@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CabinGuard-ADI Driver Incapacitation Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+:root{--bg:#eef2f7;--pn:#fff;--ln:#d3dbe6;--tx:#0f1b2d;--mu:#5b6b80;--cy:#0e7490;--ok:#047857;--wn:#b45309;--bd:#be123c;--in:#f1f5f9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#050b14;--pn:#0b1422;--ln:#1b2a40;--tx:#e6edf6;--mu:#8196ad;--cy:#22d3ee;--ok:#34d399;--wn:#fbbf24;--bd:#fb7185;--in:#060d18}}
+:root[data-theme="dark"]{--bg:#050b14;--pn:#0b1422;--ln:#1b2a40;--tx:#e6edf6;--mu:#8196ad;--cy:#22d3ee;--ok:#34d399;--wn:#fbbf24;--bd:#fb7185;--in:#060d18}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--pn);z-index:10}
+h1,h2{font-family:"Space Grotesk",system-ui,sans-serif;margin:0}
+.m,.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--pn);border-bottom:1px solid var(--ln);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+header h1{font-size:20px}header p{margin:0;color:var(--mu);font-size:12px}
+.tag{font-size:11px;border:1px solid var(--ln);border-radius:6px;padding:2px 8px;color:var(--mu);margin-left:10px}
+.br,.hr{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hr span.mono{font-size:12px;color:var(--mu)}.hr b{color:var(--tx)}
+[data-t=ok]{--c:var(--ok)}[data-t=wn]{--c:var(--wn)}[data-t=bd]{--c:var(--bd)}[data-t=in]{--c:var(--cy)}
+.t{color:var(--c)}
+.bdg{display:flex;align-items:center;gap:8px;border:1px solid var(--c);color:var(--c);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:600}
+.bdg i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+main{max-width:1600px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:16px}
+@media(max-width:980px){main{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.c{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:14px;min-width:0}
+.c h2{font-size:15px}.sub{color:var(--mu);font-size:12px;margin:2px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+button{font:inherit;font-size:12px;color:var(--tx);background:var(--in);border:1px solid var(--ln);border-radius:7px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--cy)}button:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+button.on{background:var(--cy);color:var(--pn);border-color:var(--cy);font-weight:600}
+.sc{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+#cv{position:relative;height:min(58vh,560px);min-height:340px;border-radius:8px;overflow:hidden;background:#03070f;cursor:grab}
+.ir canvas{filter:grayscale(1) sepia(1) hue-rotate(75deg) saturate(3.2) contrast(1.15)}
+#ov{position:absolute;top:10px;left:10px;background:rgba(3,7,15,.82);border:1px solid #1b2a40;border-radius:8px;padding:8px 10px;font:11px/1.6 "JetBrains Mono",monospace;color:#9fb3c8;pointer-events:none;min-width:210px}
+#ov div{display:flex;justify-content:space-between;gap:14px}#ov b{color:#34d399}
+.big{font-size:30px;font-weight:700;line-height:1}
+.bar{position:relative;height:12px;border-radius:6px;background:var(--in);border:1px solid var(--ln);margin:10px 0}
+#rb{height:100%;border-radius:6px;background:var(--c);transition:width .1s}
+.thr{position:absolute;left:65%;top:-4px;bottom:-4px;border-left:2px dashed var(--bd)}
+.ch{background:#050b14;border-radius:8px;padding:6px}.ch canvas{width:100%;height:96px;display:block}
+.leg{font-size:11px;color:#8196ad;display:flex;gap:14px;margin-bottom:2px}
+#gb{display:none;margin-top:10px;border:1px solid var(--wn);border-radius:8px;padding:10px 12px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#gb.show{display:flex}
+.par{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.par span{font-size:11px;border:1px solid var(--ln);border-radius:6px;padding:2px 8px;color:var(--mu)}
+.bm{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-bottom:1px solid var(--ln);align-items:center}
+.bm:last-of-type{border:0}.bm small{color:var(--mu);margin-left:6px}.bm b{font:700 13px "JetBrains Mono",monospace}
+.bm i{grid-column:1/3;height:4px;border-radius:2px;background:var(--in);display:block}.bm u{display:block;height:100%;border-radius:2px;background:var(--c,var(--ok));width:0;transition:width .15s}
+.st{display:flex;gap:4px;flex-wrap:wrap}.st span{flex:1;min-width:84px;text-align:center;font-size:11px;padding:6px 4px;border-radius:6px;border:1px solid var(--ln);color:var(--mu)}
+.st span.d{color:var(--ok);border-color:var(--ok)}.st span.a{background:var(--cy);color:var(--pn);border-color:var(--cy);font-weight:700}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.kv div{background:var(--in);border:1px solid var(--ln);border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;font-size:12px;color:var(--mu)}.kv b{color:var(--tx);font-family:"JetBrains Mono",monospace}
+#log{background:#050b14;border-radius:8px;padding:8px 10px;height:210px;overflow-y:auto;font:11px/1.6 "JetBrains Mono",monospace;color:#9fb3c8}
+.l-w{color:#fbbf24}.l-c{color:#fb7185;font-weight:700}.l-d{color:#5b6b80}.l-o{color:#34d399}
+pre{margin:8px 0 0;background:#050b14;color:#9fb3c8;border-radius:8px;padding:10px;font:11px/1.5 "JetBrains Mono",monospace;white-space:pre-wrap;word-break:break-all}
+footer{text-align:center;color:var(--mu);font-size:12px;padding:6px 16px 20px}
+</style>
+</head>
+<body>
+<header>
+ <div class="br"><div><h1>CabinGuard-ADI</h1><p>In-cabin driver incapacitation detection with fail-safe vehicle control</p></div><span class="tag">TSYP14 simulator v2</span></div>
+ <div class="hr"><span class="mono">T+<b id="clk">00:00.0</b></span><span class="mono">FPS <b id="fps">60</b></span><span class="mono">Pipeline latency <b id="lat">22 ms</b></span><span id="bdg" class="bdg" data-t="ok"><i></i><span id="bt">Monitoring</span></span></div>
+</header>
+<main>
+<div class="col">
+ <div class="c">
+  <div class="row"><div><h2>In-cabin optical stream</h2><p class="sub">Drag to orbit, scroll to zoom. The cockpit view shows the road as the vehicle reacts.</p></div>
+   <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="setCam('driver')">Driver focus</button><button onclick="setCam('ir')">DMS camera</button><button onclick="setCam('cabin')">Cockpit and road</button><button id="irb" onclick="toggleIR()">IR 850 nm</button></div></div>
+  <div id="cv"><div id="ov">
+   <div><span>EAR</span><b id="o1">0.31</b></div><div><span>Pitch / yaw</span><b id="o2">0° / 0°</b></div><div><span>Heart rate (rPPG)</span><b id="o3">72 bpm</b></div><div><span>Face mesh</span><b>468 pts locked</b></div></div></div>
+  <div class="sc">
+   <button data-s="normal" onclick="setScn('normal')" class="on">Normal driving</button>
+   <button data-s="seizure" onclick="setScn('seizure')">Seizure</button>
+   <button data-s="syncope" onclick="setScn('syncope')">Cardiac syncope</button>
+   <button data-s="edge" onclick="setScn('edge')">Yawn and mirror check</button>
+  </div>
+ </div>
+ <div class="c" id="rc" data-t="ok">
+  <div class="row" style="margin:0"><div><h2>Leaky integrator risk score</h2><p class="sub">R[n] = λ·R[n−1] + (1−λ)·S[n]. Short anomalies decay; sustained ones escalate.</p></div><div style="text-align:right"><div class="big mono t" id="rp">3%</div><span class="sub">Confidence index</span></div></div>
+  <div class="bar"><div id="rb"></div><div class="thr"></div></div>
+  <div class="ch"><div class="leg"><span style="color:#22d3ee">EAR</span><span style="color:#fb7185">Risk R</span><span>Dashed: 65% trigger · 10 s window</span></div><canvas id="chart"></canvas></div>
+  <div id="gb"><div><b class="t" style="--c:var(--wn)" id="gt">Pre-alert</b><div class="sub">Acoustic and haptic warning active. Respond to cancel.</div></div>
+   <div style="display:flex;align-items:center;gap:14px"><div class="mono" style="text-align:center"><b class="big" style="color:var(--wn)" id="cdv">10.0s</b><div class="sub">to intervention</div></div><button onclick="cancelGrace()">I am fine, cancel</button></div></div>
+  <div class="par"><span>λ = 0.97 @ 20 Hz</span><span>τ ≈ 1.6 s</span><span>Trigger θ = 65%</span><span>Recover below 30%</span><span>Decel −2.8 m/s²</span><span>PERCLOS window 60 s</span></div>
+ </div>
+</div>
+<div class="col">
+ <div class="c"><div class="row" style="margin-bottom:4px"><div><h2>Sensor fusion</h2><p class="sub">Weighted biomarkers feeding the integrator</p></div><div style="text-align:right"><b class="mono" id="sv">0.00</b><div class="sub">Instant score S</div></div></div><div id="bms"></div></div>
+ <div class="c"><h2 style="margin-bottom:8px">Response state machine</h2><div class="st" id="st"></div></div>
+ <div class="c"><h2 style="margin-bottom:8px">CAN-bus vehicle interface</h2>
+  <div class="kv"><div>Speed<b id="k1">90 km/h</b></div><div>Decel request<b id="k2">0.0 m/s²</b></div><div>Hazards<b id="k3">OFF</b></div><div>Lane control<b id="k4">Lane keep</b></div></div>
+  <div id="log"></div></div>
+ <div class="c" id="dc" data-t="in"><div class="row" style="margin-bottom:4px"><h2>Secure emergency dispatch</h2><span class="sub mono">TLS 1.3 · HMAC-SHA256</span></div>
+  <div class="kv" style="margin:8px 0 0"><div>Status<b id="d1" class="t">Standby</b></div><div>Route<b>SAMU 190</b></div></div>
+  <pre id="pl"></pre><p class="sub" style="margin-top:8px">Raw video and biometric streams stay on the edge device. Only the signed, anonymised payload leaves the vehicle.</p></div>
+</div>
+</main>
+<footer>CabinGuard-ADI · IEEE VTS and EMBS challenge · proof-of-concept simulation, not a certified safety system</footer>
+<script>
+const $=i=>document.getElementById(i),cl=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+let scene,cam,ren,ctl,head,spine,eL,eR,mouth,box,road,hzl,hl,cluC,cluT,moving=[],hz=[];
+const clock=new THREE.Clock();
+let scn='normal',stage=0,T=0,acc=0,n=0,R=3,S=0,speed=90,cd=10,hazard=false,etio='NONE',ack=false,run=0,frames=0,last=performance.now(),audio=null;
+const sig={ear:.31,per:.04,pit:0,yaw:0,trm:.2,slp:.02,hr:72,mouth:0},comp={},eh=[],rh=[];
+const W={ear:.2,per:.15,trm:.25,slp:.2,pit:.1,hr:.1},N={ear:.012,per:.008,pit:.5,yaw:.6,trm:.12,slp:.008,hr:.7,mouth:0};
+const BM=[['ear','Eye aspect ratio',v=>v.toFixed(2)],['per','PERCLOS',v=>(v*100).toFixed(0)+'%'],['trm','Tremor frequency',v=>v.toFixed(1)+' Hz'],['slp','Postural slump',v=>v.toFixed(2)+' g'],['pit','Head pitch',v=>v.toFixed(0)+'°'],['hr','Heart rate (rPPG)',v=>v.toFixed(0)+' bpm']];
+const tg={
+ normal:t=>({ear:.31,per:.04,pit:0,yaw:8*Math.sin(t*.5),trm:.2,slp:.02,hr:72,mouth:0}),
+ seizure:t=>({ear:.14,per:.7,pit:12*Math.sin(t*9),yaw:15*Math.sin(t*11),trm:5.5,slp:.5,hr:120,mouth:.1}),
+ syncope:t=>({ear:.02,per:.97,pit:40,yaw:4,trm:.4,slp:.88,hr:42,mouth:.3}),
+ edge:t=>{const y=(t%7)<2;return{ear:y?.07:.24,per:y?.3:.1,pit:y?-8:2,yaw:y?0:30*Math.sin(t*1.3),trm:.3,slp:.05,hr:84,mouth:y?1:0}}};
+const STG=['Monitor','Pre-alert','Intervene','Safe stop','eCall sent'];
+
+function init3D(){
+ const c=$('cv'),w=c.clientWidth,h=c.clientHeight;
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x03070f);scene.fog=new THREE.Fog(0x03070f,4,30);
+ cam=new THREE.PerspectiveCamera(42,w/h,.05,60);
+ ren=new THREE.WebGLRenderer({antialias:true});ren.setSize(w,h);ren.setPixelRatio(Math.min(devicePixelRatio,2));c.appendChild(ren.domElement);
+ ctl=new THREE.OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.minDistance=.6;ctl.maxDistance=5;
+ scene.add(new THREE.HemisphereLight(0x8fb4d9,0x0b1220,.95));
+ const sp=new THREE.SpotLight(0xdff3ff,1.5,6,.7,.6);sp.position.set(-.4,1.9,.9);sp.target.position.set(-.4,1.15,0);scene.add(sp,sp.target);
+ const k=new THREE.DirectionalLight(0x22d3ee,.45);k.position.set(2,3,3);scene.add(k);
+ build();setCam('driver');window.addEventListener('resize',()=>{const c=$('cv');cam.aspect=c.clientWidth/c.clientHeight;cam.updateProjectionMatrix();ren.setSize(c.clientWidth,c.clientHeight)});animate();
+}
+function build(){
+ const M=(c,r=.7,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+ const add=(g,m,x,y,z,p=scene)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);p.add(o);return o};
+ const B=(a,b,c)=>new THREE.BoxGeometry(a,b,c);
+ add(B(1.7,.06,2.2),M(0x0b1220),0,.2,0);
+ add(B(1.7,.34,.5),M(0x111c2e,.6),0,.72,.8);
+ add(B(1.7,.05,.9),M(0x0f1a2b),0,1.8,.5);
+ [-.85,.85].forEach(x=>{add(B(.06,.95,.06),M(0x0f1a2b),x,1.35,.95).rotation.x=-.45});
+ const gl=add(new THREE.PlaneGeometry(1.7,1),new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:.07,side:THREE.DoubleSide}),0,1.35,.95);gl.rotation.x=-.45;
+ const seat=M(0x0a1220,.9);
+ add(B(.52,.85,.1),seat,-.4,.9,-.32);add(B(.52,.1,.52),seat,-.4,.5,-.05);add(B(.22,.18,.09),seat,-.4,1.38,-.3);
+ const wh=new THREE.Group();wh.position.set(-.4,.95,.4);wh.rotation.x=-.35;scene.add(wh);
+ const wm=M(0x1e293b,.5,.3);add(new THREE.TorusGeometry(.17,.022,12,36),wm,0,0,0,wh);add(B(.34,.02,.02),wm,0,0,0,wh);add(B(.02,.17,.02),wm,0,-.085,0,wh);
+ cluC=document.createElement('canvas');cluC.width=256;cluC.height=96;cluT=new THREE.CanvasTexture(cluC);
+ const cl=add(new THREE.PlaneGeometry(.34,.13),new THREE.MeshBasicMaterial({map:cluT}),-.4,.8,.548);cl.rotation.y=Math.PI;
+ add(B(.07,.03,.03),M(0x000000),-.4,.93,.55);add(new THREE.SphereGeometry(.006,8,8),new THREE.MeshBasicMaterial({color:0x34d399}),-.4,.945,.53);
+ [-.12,.12].forEach(x=>hz.push(add(new THREE.SphereGeometry(.014,10,10),new THREE.MeshBasicMaterial({color:0xfbbf24}),x,.9,.54)));
+ hl=new THREE.PointLight(0xfbbf24,0,2.5);hl.position.set(0,1,.5);scene.add(hl);
+ // driver
+ const d=new THREE.Group();d.position.set(-.4,.55,0);scene.add(d);
+ spine=new THREE.Group();d.add(spine);
+ const skin=M(0xc9967a,.55),shirt=M(0x1f2f46,.8);
+ add(new THREE.CylinderGeometry(.22,.18,.55,20),shirt,0,.28,0,spine);
+ [-.22,.22].forEach(x=>{add(new THREE.SphereGeometry(.07,12,12),shirt,x,.5,0,spine);const a=add(new THREE.CylinderGeometry(.035,.03,.46,10),shirt,x*.9,.45,.2,spine);a.rotation.x=Math.PI/2});
+ add(new THREE.CylinderGeometry(.05,.055,.12,12),skin,0,.58,0,spine);
+ head=new THREE.Group();head.position.set(0,.68,0);spine.add(head);
+ const hb=add(new THREE.SphereGeometry(.13,28,28),skin,0,0,0,head);hb.scale.set(.92,1.08,1);
+ add(new THREE.SphereGeometry(.136,24,16,0,Math.PI*2,0,Math.PI/2.2),M(0x1a1410,.9),0,.01,-.015,head);
+ add(new THREE.ConeGeometry(.018,.05,10),skin,0,-.01,.14,head).rotation.x=Math.PI/2;
+ const ew=new THREE.MeshBasicMaterial({color:0xf1f5f9}),pm=new THREE.MeshBasicMaterial({color:0x0b0b0b});
+ [-1,1].forEach(s=>{const e=add(new THREE.SphereGeometry(.022,14,14),ew,s*.045,.03,.112,head);add(new THREE.SphereGeometry(.011,10,10),pm,0,0,.016,e);if(s<0)eL=e;else eR=e;add(B(.05,.008,.01),M(0x1a1410),s*.045,.07,.12,head)});
+ mouth=add(B(.06,.01,.01),M(0x7f1d1d),0,-.065,.12,head);
+ const pos=new Float32Array(468*3);for(let i=0;i<468;i++){const a=i/468*1.75,b=i*2.39996,r=.137;pos.set([r*Math.sin(a)*Math.cos(b)*.92,r*Math.sin(a)*Math.sin(b)*1.08,r*Math.cos(a)],i*3)}
+ const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+ head.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x34d399,size:.006})));
+ head.add(new THREE.ArrowHelper(new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,.14),.2,0x22d3ee,.04,.025));
+ box=new THREE.BoxHelper(hb,0x22d3ee);scene.add(box);
+ const cg=new THREE.ConeGeometry(.2,.6,24,1,true);cg.translate(0,-.3,0);
+ const cone=new THREE.Mesh(cg,new THREE.MeshBasicMaterial({color:0x34d399,transparent:true,opacity:.1,wireframe:true}));cone.position.set(-.4,.93,.55);cone.rotation.x=Math.PI/2;scene.add(cone);
+ // road
+ road=new THREE.Group();scene.add(road);
+ const g=add(new THREE.PlaneGeometry(12,90),M(0x0a0f1a,.95),0,-.2,40,road);g.rotation.x=-Math.PI/2;
+ const lm=new THREE.MeshBasicMaterial({color:0xcbd5e1}),ym=new THREE.MeshBasicMaterial({color:0x64748b});
+ [-3,3].forEach(x=>add(B(.08,.01,90),lm,x,-.19,40,road));
+ [-1.5,1.5].forEach(x=>{for(let i=0;i<15;i++)moving.push([add(B(.08,.01,1.6),ym,x,-.19,-4+i*4,road),60])});
+ [-3.7,3.7].forEach(x=>{for(let i=0;i<10;i++)moving.push([add(B(.07,1.1,.07),ym,x,.35,-4+i*6,road),60])});
+}
+function setCam(p){const P={driver:[[-.15,1.55,1.45],[-.4,1.15,0]],ir:[[-.4,1.02,.62],[-.4,1.2,0]],cabin:[[-1.6,1.8,-1.8],[-.2,1.0,.8]]}[p];cam.position.set(...P[0]);ctl.target.set(...P[1]);ctl.update()}
+function toggleIR(){$('cv').classList.toggle('ir');$('irb').classList.toggle('on')}
+function animate(){
+ requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.1),t=clock.elapsedTime;
+ frames++;if(performance.now()-last>=1000){$('fps').textContent=frames;frames=0;last=performance.now();$('lat').textContent=(17+Math.random()*9|0)+' ms'}
+ acc+=dt;while(acc>=.05){acc-=.05;tick()}
+ const j=sig.trm*.03,r=()=>(Math.random()-.5)*j;
+ head.rotation.x=sig.pit*.01745+r();head.rotation.y=sig.yaw*.01745+r();
+ spine.rotation.x=sig.slp*.55;spine.rotation.z=r()*.5;spine.position.y=Math.sin(t*1.6)*.002;
+ const bl=scn==='normal'&&(t%3.7)<.13,o=cl(sig.ear/.32,.04,1)*(bl?.1:1);eL.scale.y=eR.scale.y=o;mouth.scale.y=1+sig.mouth*7;
+ const dz=speed/3.6*dt*.4;moving.forEach(m=>{m[0].position.z-=dz;if(m[0].position.z<-4)m[0].position.z+=m[1]});
+ road.position.x+=((stage>=2?2.4:0)-road.position.x)*dt*.4;
+ const on=hazard&&(t%.8)<.4;hz.forEach(m=>m.visible=on);hl.intensity=on?1.4:0;
+ box.update();ctl.update();ren.render(scene,cam);
+}
+function tick(){
+ T+=.05;n++;const g=tg[scn](T);
+ for(const k in sig)sig[k]+=(g[k]-sig[k])*((k==='pit'||k==='yaw'||k==='mouth')?.25:.12)+(Math.random()-.5)*N[k];
+ sig.trm=Math.max(0,sig.trm);sig.per=cl(sig.per);sig.ear=Math.max(.01,sig.ear);
+ comp.ear=cl(1-sig.ear/.3);comp.per=sig.per;comp.trm=cl(sig.trm/5);comp.slp=cl(sig.slp/.7);comp.pit=cl(Math.abs(sig.pit)/35);comp.hr=cl(Math.abs(sig.hr-72)/45);
+ S=0;for(const k in W)S+=W[k]*comp[k];
+ R=.97*R+.03*S*100;
+ eh.push(sig.ear);rh.push(R);if(eh.length>200){eh.shift();rh.shift()}
+ if(stage===0&&R>=65){etio=sig.trm>3?'EPILEPTIC SEIZURE':sig.slp>.6?'CARDIAC SYNCOPE':'UNCLASSIFIED';stage=1;cd=10;beep();
+  logC('CRITICAL: R='+R.toFixed(0)+'% crossed 65%. Etiology: '+etio+'. 10 s grace period started.','c')}
+ else if(stage===1){cd-=.05;
+  if(R<30){stage=0;logC('INFO: Driver recovered, R<30%. Pre-alert cleared.','o')}
+  else if(cd<=0){stage=2;hazard=true;logC('FAIL_SAFE: Grace expired. CAN 0x2F0 HAZARD_ON + DECEL_REQ −2.8 m/s².','c')}}
+ else if(stage===2){speed=Math.max(0,speed-10.08*.05);
+  if(n%20===0)logC('0x2F0 [8] DECEL_REQ v='+speed.toFixed(0)+' km/h, steer→shoulder','w');
+  if(speed===0){stage=3;logC('CAN_BUS: Standstill on shoulder. Parking brake set, doors unlocked.','c');dispatch()}}
+ else if(stage===0&&n%100===0)logC('0x1A0 [4] DMS_HB ok R='+R.toFixed(0)+'%','d');
+ if(n%2===0)ui();
+}
+function dispatch(){const r=run;sendPayload(true);
+ setTimeout(()=>{if(r!==run)return;stage=4;logC('ECALL: Payload signed and sent to SAMU 190 over TLS 1.3.','o')},1200);
+ setTimeout(()=>{if(r!==run)return;ack=true;logC('ECALL: PSAP ACK received. Responders en route.','o')},3200)}
+async function sendPayload(sent){
+ const p={veh_id:'TN-2026-SEC',lat:36.8065,lon:10.1815,etiology:sent?etio:'NONE',conf:sent?+(R/100).toFixed(2):0,speed_kmh:Math.round(speed)};
+ let h='unavailable';try{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode('tsyp14-demo-key'),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+ const s=await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(JSON.stringify(p)));h=[...new Uint8Array(s)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,32)}catch(e){}
+ p.hmac=h;$('pl').textContent=JSON.stringify(p,null,2)}
+function setScn(s){
+ scn=s;stage=0;hazard=false;speed=90;R=3;cd=10;etio='NONE';ack=false;run++;
+ document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+ logC({normal:'INFO: Baseline restored. Integrator reset, vehicle at 90 km/h.',seizure:'WARNING: 4–6 Hz tremor and ocular spasm detected.',syncope:'WARNING: Head drop, EAR<0.05, loss of muscle tone.',edge:'INFO: Yawn and mirror-check pattern. Integrator absorbing.'}[s],s==='normal'||s==='edge'?'':'w');
+ sendPayload(false);
+}
+function cancelGrace(){logC('OVERRIDE: Driver confirmed alert. Escalation cancelled.','w');setScn('normal')}
+function logC(m,c){const b=$('log'),d=document.createElement('div');d.className=c?'l-'+c:'';
+ const s=T.toFixed(1).padStart(5,'0');d.textContent='['+s+'] '+m;b.appendChild(d);while(b.children.length>70)b.firstChild.remove();b.scrollTop=b.scrollHeight}
+function beep(){try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.25)}catch(e){}}
+function ui(){
+ const r=Math.round(R),col=r>=65?'bd':r>=35?'wn':'ok';
+ $('rc').dataset.t=col;$('rp').textContent=r+'%';$('rb').style.width=r+'%';$('sv').textContent=S.toFixed(2);
+ const m=T%60|0;$('clk').textContent=String(T/60|0).padStart(2,'0')+':'+(T%60).toFixed(1).padStart(4,'0');
+ BM.forEach(([k,,f])=>{$('v'+k).textContent=f(sig[k]);const u=$('u'+k);u.style.width=comp[k]*100+'%';u.style.setProperty('--c',comp[k]>.66?'var(--bd)':comp[k]>.33?'var(--wn)':'var(--ok)')});
+ $('o1').textContent=sig.ear.toFixed(2);$('o2').textContent=sig.pit.toFixed(0)+'° / '+sig.yaw.toFixed(0)+'°';$('o3').textContent=sig.hr.toFixed(0)+' bpm';
+ const B=[['ok','Monitoring: all biomarkers nominal'],['wn','Pre-alert: driver grace period'],['bd','Intervention: controlled deceleration'],['bd','Safe stop: vehicle immobilised'],['in','eCall sent: responders notified']];
+ let b=B[stage];if(stage===0&&r>=20&&scn!=='normal')b=['wn','Anomaly detected: integrating'];
+ $('bdg').dataset.t=b[0];$('bt').textContent=b[1];
+ $('gb').classList.toggle('show',stage===1);$('cdv').textContent=Math.max(0,cd).toFixed(1)+'s';$('gt').textContent=etio+' suspected';
+ $('k1').textContent=Math.round(speed)+' km/h';$('k2').textContent=(stage===2&&speed>0?'−2.8':'0.0')+' m/s²';$('k3').textContent=hazard?'ACTIVE':'OFF';$('k4').textContent=stage>=3?'On shoulder':stage===2?'Moving to shoulder':'Lane keep';
+ $('st').querySelectorAll('span').forEach((e,i)=>e.className=i<stage?'d':i===stage?'a':'');
+ $('d1').textContent=stage<3?'Standby':stage===3?'Signing payload':ack?'Acknowledged':'Sent, awaiting ACK';$('dc').dataset.t=stage>=4?'ok':'in';
+ chart();drawCluster();
+}
+function drawCluster(){const c=cluC.getContext('2d');c.fillStyle='#04070d';c.fillRect(0,0,256,96);c.fillStyle='#e6edf6';c.font='700 54px monospace';c.textAlign='center';c.fillText(Math.round(speed),100,62);
+ c.font='14px monospace';c.fillStyle='#8196ad';c.fillText('km/h',100,84);c.fillStyle=stage>=1?'#fbbf24':'#34d399';c.fillText('DMS '+STG[stage].toUpperCase(),198,40);if(hazard&&(T%.8)<.4){c.fillStyle='#fbbf24';c.font='30px monospace';c.fillText('⚠',198,76)}cluT.needsUpdate=true}
+function chart(){const cv=$('chart'),d=devicePixelRatio||1,w=cv.width=cv.clientWidth*d,h=cv.height=cv.clientHeight*d,c=cv.getContext('2d');c.clearRect(0,0,w,h);
+ c.strokeStyle='#1b2a40';c.lineWidth=1;for(let i=1;i<4;i++){c.beginPath();c.moveTo(0,h*i/4);c.lineTo(w,h*i/4);c.stroke()}
+ c.setLineDash([6*d,5*d]);c.strokeStyle='#fb7185';c.beginPath();c.moveTo(0,h*.35);c.lineTo(w,h*.35);c.stroke();c.setLineDash([]);
+ const L=(a,s,col)=>{c.beginPath();c.strokeStyle=col;c.lineWidth=2*d;a.forEach((v,i)=>{const x=i/199*w,y=h-cl(v*s)*h;i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()};
+ L(eh,2.5,'#22d3ee');L(rh,.01,'#fb7185')}
+// build static UI
+$('bms').innerHTML=BM.map(([k,l])=>'<div class="bm"><span>'+l+'<small>w '+W[k]+'</small></span><b id="v'+k+'"></b><i><u id="u'+k+'"></u></i></div>').join('');
+$('st').innerHTML=STG.map(s=>'<span>'+s+'</span>').join('');
+window.onload=()=>{init3D();setScn('normal');logC('SYS_INIT: CAN gateway up, HMAC-SHA256 session key loaded.','d');logC('SENSOR: NIR camera 850 nm @ 30 fps, face mesh locked.','o')};
+</script>
+</body>
+</html>
